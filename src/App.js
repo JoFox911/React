@@ -2,6 +2,11 @@ import { useState, useRef } from 'react';
 
 import { Table, Button, Form, Modal } from 'react-bootstrap';
 
+function convertTokensIdsStringToArray(tokenIds) {
+  const tokenIdsArray = tokenIds.split(',')
+  return tokenIdsArray.map(tokenId => tokenId.trim())
+}
+
 const Footer = () => {
   return (
     <footer className="text-black-50 text-center py-3">
@@ -13,6 +18,7 @@ const Footer = () => {
 function InsertedItemsTable({items, onDeleteItemClick}) {
   return (
     <Table striped bordered hover>
+      {/* {JSON.stringify(items)} */}
       <thead>
         <tr>
           <th>Valet</th>
@@ -24,7 +30,7 @@ function InsertedItemsTable({items, onDeleteItemClick}) {
         {items.map((row, index) => (
           <tr key={index}>
             <td>{row.valet}</td>
-            <td>{row.tokenIds}</td>
+            <td>{row.tokenIdsArray.join(',')}</td>
             <td>
               <Button variant="danger" onClick={() => onDeleteItemClick(index)}>
                 X
@@ -44,7 +50,7 @@ function InputTokensForm({ onSubmitClick }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    onSubmitClick({ valet, tokenIds });
+    onSubmitClick({ valet, tokenIdsArray: convertTokensIdsStringToArray(tokenIds) });
     setValet("")
     setTokenIds("")
   };
@@ -184,7 +190,7 @@ const FileUploader = ({onInsertedItemsLoaded}) => {
       const [valet, tokenIds] = row.split(":")
       insertedItems.push({
         valet: valet.trim(),
-        tokenIds: tokenIds.trim()
+        tokenIdsArray: convertTokensIdsStringToArray(tokenIds)
       })
     });
     onInsertedItemsLoaded(insertedItems)
@@ -222,12 +228,28 @@ export default function App() {
 
   function addNewItem(newItem) {
     const nextItems = insertedItems.slice()
-    nextItems.push(newItem)
+
+    const itemWithSameAddress = nextItems.find(existedItem => existedItem.valet === newItem.valet)
+    if (itemWithSameAddress) {
+      itemWithSameAddress.tokenIdsArray = [...new Set([...itemWithSameAddress.tokenIdsArray, ...newItem.tokenIdsArray])]
+    } else {
+      nextItems.push(newItem)
+    }
     setNewItem(nextItems)
   }
 
   function addNewItemsArray(newItems) {
-    const nextItems = [...insertedItems.slice(), ...newItems]
+    const nextItems = insertedItems.slice()
+
+    newItems.forEach(newItem => {
+      const itemWithSameAddress = nextItems.find(existedItem => existedItem.valet === newItem.valet)
+      if (itemWithSameAddress) {
+        itemWithSameAddress.tokenIdsArray = [...new Set([...itemWithSameAddress.tokenIdsArray, ...newItem.tokenIdsArray])]
+      } else {
+        nextItems.push(newItem)
+      }
+    })
+
     setNewItem(nextItems)
   }
 

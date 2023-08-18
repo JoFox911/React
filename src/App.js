@@ -166,6 +166,7 @@ const FileUploader = ({onInsertedItemsLoaded}) => {
     } catch (error) {
       alert('Error reading the file.');
     }
+    e.target.value = ''
   };
 
   const readFileContent = (file) => {
